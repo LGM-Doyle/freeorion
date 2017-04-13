@@ -855,9 +855,7 @@ namespace {
             return;
         }
 
-
         int empire_id = HumanClientApp::GetApp()->EmpireID();
-
 
         // name and design name update
         const std::string& ship_name = ship->PublicName(empire_id);
@@ -901,7 +899,9 @@ namespace {
                                                    TroopIcon(), UserString("SHIP_TROOPS_TITLE"),
                                                    UserString("SHIP_TROOPS_STAT")));
 
-            } else if (entry.first == METER_SECONDARY_STAT) {
+            } else if (entry.first == METER_SECONDARY_STAT
+                       || entry.first == METER_TERTIARY_STAT)
+            {
                 entry.second->SetBrowseInfoWnd(GG::Wnd::Create<ShipFightersBrowseWnd>(
                                                    m_ship_id, entry.first));
                 entry.second->SetBrowseModeTime(GetOptionsDB().Get<int>("ui.tooltip.extended.delay"), 1);

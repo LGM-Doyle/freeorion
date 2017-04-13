@@ -31,9 +31,23 @@ namespace std {
 namespace {
     const boost::phoenix::function<parse::detail::is_unique> is_unique_;
 
+    struct StatWrapper {
+        StatWrapper() :
+            capacity(0.0), stat2(1.0), stat3(1.0)
+        {}
+        StatWrapper(boost::optional<double> capacity_,
+                    boost::optional<double> stat2_,
+                    boost::optional<double> stat3_) :
+            capacity(capacity_), stat2(stat2_), stat3(stat3_)
+        {}
+        boost::optional<double> capacity = boost::optional<double>(0.0);
+        boost::optional<double> stat2 = boost::optional<double>(1.0);
+        boost::optional<double> stat3 = boost::optional<double>(1.0);
+    };
+
     void insert_parttype(std::map<std::string, std::unique_ptr<PartType>>& part_types,
                          ShipPartClass part_class,
-                         std::pair<boost::optional<double>, boost::optional<double>> capacity_and_stat2,
+                         const StatWrapper& stats,
                          const parse::detail::MovableEnvelope<CommonParams>& common_params,
                          const MoreCommonParams& more_common_params,
                          boost::optional<std::vector<ShipSlotType>> mountable_slot_types,
@@ -43,8 +57,9 @@ namespace {
     {
         auto part_type = boost::make_unique<PartType>(
             part_class,
-            (capacity_and_stat2.first ? *capacity_and_stat2.first : 0.0),
-            (capacity_and_stat2.second ? *capacity_and_stat2.second : 1.0),
+            (stats.capacity ? *(stats.capacity) : 0.0),
+            (stats.stat2 ? *(stats.stat2) : 1.0),
+            (stats.stat3 ? *(stats.stat3) : 1.0),
             *common_params.OpenEnvelope(pass), more_common_params,
             (mountable_slot_types ? *mountable_slot_types : std::vector<ShipSlotType>()),
             icon,
@@ -85,29 +100,34 @@ namespace {
             qi::_6_type _6;
             qi::_7_type _7;
             qi::_8_type _8;
-            qi::_9_type _9;
             qi::_pass_type _pass;
+            qi::_val_type _val;
             qi::_r1_type _r1;
             qi::matches_type matches_;
 
-            part_type
-                = ( tok.Part_
-                >   common_rules.more_common
-                >   label(tok.Class_)       > ship_part_class_enum
-                > -(  (label(tok.Capacity_)  > double_rule)
+            stat_wrapper
+                = (
+                  -(  (label(tok.Capacity_)  > double_rule)
                    | (label(tok.Damage_)    > double_rule)
                    )
                 > -(  (label(tok.Damage_)    > double_rule )   // damage is secondary for fighters
                    | (label(tok.Shots_)     > double_rule )   // shots is secondary for direct fire weapons
                    )
+                > -(  (label(tok.Noisiness_)> double_rule )   // noisiness for weapons / fighter bays
+                   )
+                ) [ _val = construct<StatWrapper>(_1, _2, _3) ];
+
+            part_type
+                = ( tok.Part_
+                >   common_rules.more_common
+                >   label(tok.Class_)       > ship_part_class_enum
+                >  stat_wrapper
                 > matches_[tok.NoDefaultCapacityEffect_]
                 > -(label(tok.MountableSlotTypes_) > one_or_more_slots)
                 >   common_rules.common
-                >   label(tok.Icon_)        > tok.string
+                >   label(tok.Icon_)        > tok.string 
                   ) [ _pass = is_unique_(_r1, _1, phoenix::bind(&MoreCommonParams::name, _2)),
-                      insert_parttype_(_r1, _3,
-                                       construct<std::pair<boost::optional<double>, boost::optional<double>>>(_4, _5)
-                                       , _8, _2, _7, _9, _6, _pass) ]
+                      insert_parttype_(_r1, _3, _4, _7, _2, _6, _8, _5, _pass) ]
                 ;
 
             start
@@ -123,6 +143,7 @@ namespace {
             qi::on_error<qi::fail>(start, parse::report_error(filename, first, last, _1, _2, _3, _4));
         }
 
+        using  stat_wrapper_rule = parse::detail::rule<StatWrapper ()>;
         using  part_type_rule = parse::detail::rule<void (start_rule_payload&)>;
 
         using start_rule = parse::detail::rule<start_rule_signature>;
@@ -137,6 +158,7 @@ namespace {
         parse::detail::double_grammar double_rule;
         parse::detail::single_or_bracketed_repeat<parse::ship_slot_enum_grammar> one_or_more_slots;
         part_type_rule                     part_type;
+        stat_wrapper_rule                  stat_wrapper;;
         start_rule                         start;
     };
 
