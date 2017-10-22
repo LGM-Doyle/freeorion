@@ -13,6 +13,7 @@
 #include "../universe/Condition.h"
 #include "../universe/ValueRef.h"
 
+#include <tuple>
 #include <boost/spirit/include/phoenix.hpp>
 //TODO: replace with std::make_unique when transitioning to C++14
 #include <boost/smart_ptr/make_unique.hpp>
@@ -31,23 +32,23 @@ namespace std {
 namespace {
     const boost::phoenix::function<parse::detail::is_unique> is_unique_;
 
-    struct StatWrapper {
-        StatWrapper() :
-            capacity(0.0), stat2(1.0), stat3(1.0)
+    struct Stats {
+        Stats() :
+            stat1(0.0), stat2(0.0), stat3(0.0)
         {}
-        StatWrapper(boost::optional<double> capacity_,
+        Stats(boost::optional<double> stat1_,
                     boost::optional<double> stat2_,
                     boost::optional<double> stat3_) :
-            capacity(capacity_), stat2(stat2_), stat3(stat3_)
+            stat1(stat1_), stat2(stat2_), stat3(stat3_)
         {}
-        boost::optional<double> capacity = boost::optional<double>(0.0);
-        boost::optional<double> stat2 = boost::optional<double>(1.0);
-        boost::optional<double> stat3 = boost::optional<double>(1.0);
+        boost::optional<double> stat1 = boost::optional<double>(0.0);
+        boost::optional<double> stat2 = boost::optional<double>(0.0);
+        boost::optional<double> stat3 = boost::optional<double>(0.0);
     };
 
     void insert_parttype(std::map<std::string, std::unique_ptr<PartType>>& part_types,
                          ShipPartClass part_class,
-                         const StatWrapper& stats,
+                         const Stats& stats,
                          const parse::detail::MovableEnvelope<CommonParams>& common_params,
                          const MoreCommonParams& more_common_params,
                          boost::optional<std::vector<ShipSlotType>> mountable_slot_types,
@@ -57,7 +58,7 @@ namespace {
     {
         auto part_type = boost::make_unique<PartType>(
             part_class,
-            (stats.capacity ? *(stats.capacity) : 0.0),
+            (stats.stat1 ? *(stats.stat1) : 0.0),
             (stats.stat2 ? *(stats.stat2) : 1.0),
             (stats.stat3 ? *(stats.stat3) : 1.0),
             *common_params.OpenEnvelope(pass), more_common_params,
@@ -74,8 +75,7 @@ namespace {
     using start_rule_signature = void(start_rule_payload&);
 
     struct grammar : public parse::detail::grammar<start_rule_signature> {
-        grammar(const parse::lexer& tok,
-                const std::string& filename,
+        grammar(const parse::lexer& tok, const std::string& filename,
                 const parse::text_iterator& first, const parse::text_iterator& last) :
             grammar::base_type(start),
             condition_parser(tok, label),
@@ -105,7 +105,7 @@ namespace {
             qi::_r1_type _r1;
             qi::matches_type matches_;
 
-            stat_wrapper
+            stats
                 = (
                   -(  (label(tok.Capacity_)  > double_rule)
                    | (label(tok.Damage_)    > double_rule)
@@ -115,13 +115,13 @@ namespace {
                    )
                 > -(  (label(tok.Noisiness_)> double_rule )   // noisiness for weapons / fighter bays
                    )
-                ) [ _val = construct<StatWrapper>(_1, _2, _3) ];
+                ) [ _val = construct<Stats>(_1, _2, _3) ];
 
             part_type
                 = ( tok.Part_
                 >   common_rules.more_common
                 >   label(tok.Class_)       > ship_part_class_enum
-                >  stat_wrapper
+                >  stats
                 > matches_[tok.NoDefaultCapacityEffect_]
                 > -(label(tok.MountableSlotTypes_) > one_or_more_slots)
                 >   common_rules.common
@@ -143,23 +143,23 @@ namespace {
             qi::on_error<qi::fail>(start, parse::report_error(filename, first, last, _1, _2, _3, _4));
         }
 
-        using  stat_wrapper_rule = parse::detail::rule<StatWrapper ()>;
+        using  stats_rule = parse::detail::rule<Stats ()>;
         using  part_type_rule = parse::detail::rule<void (start_rule_payload&)>;
 
         using start_rule = parse::detail::rule<start_rule_signature>;
 
-        parse::detail::Labeller label;
-        const parse::conditions_parser_grammar condition_parser;
-        const parse::string_parser_grammar string_grammar;
-        parse::detail::tags_grammar tags_parser;
-        parse::detail::common_params_rules common_rules;
-        parse::ship_slot_enum_grammar  ship_slot_type_enum;
-        parse::ship_part_class_enum_grammar ship_part_class_enum;
-        parse::detail::double_grammar double_rule;
+        parse::detail::Labeller                                                  label;
+        const parse::conditions_parser_grammar                                   condition_parser;
+        const parse::string_parser_grammar                                       string_grammar;
+        parse::detail::tags_grammar                                              tags_parser;
+        parse::detail::common_params_rules                                       common_rules;
+        parse::ship_slot_enum_grammar                                            ship_slot_type_enum;
+        parse::ship_part_class_enum_grammar                                      ship_part_class_enum;
+        parse::detail::double_grammar                                            double_rule;
         parse::detail::single_or_bracketed_repeat<parse::ship_slot_enum_grammar> one_or_more_slots;
-        part_type_rule                     part_type;
-        stat_wrapper_rule                  stat_wrapper;;
-        start_rule                         start;
+        part_type_rule                                                           part_type;
+        stats_rule                                                               stats;;
+        start_rule                                                               start;
     };
 
 }
