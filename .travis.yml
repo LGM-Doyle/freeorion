@@ -66,9 +66,9 @@ before_script:
   # Setup ccache
   # Make certain ~/.ccache exists
   - mkdir -p $HOME/.ccache
-  - echo sloppiness = file_macro > $HOME/.ccache/ccache.conf
+  - echo "ccache.conf before modification"
+  - more $HOME/.ccache/ccache.conf
   - ccache --version
-  - ccache --print-config
   - ccache --show-stats
 before_cache:
   # Check ccache
