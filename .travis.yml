@@ -85,6 +85,8 @@ before_cache:
 script:
   - >
     if [[ "${BUILD_APIDOC}" == "true" && "${TRAVIS_BRANCH}" == "master" ]]; then
+      apt-get install --assume-yes ccache
+    
       cmake ..
       cmake --build . --target cpp-apidoc
 
@@ -100,6 +102,8 @@ script:
     fi
   - >
     if [[ "${TRAVIS_OS_NAME}" == "linux" && "${BUILD_UNITTEST}" == "true" ]]; then
+      apt-get install --assume-yes ccache
+    
       cmake -DBUILD_TESTING=ON ..
       cmake --build . -- -j 2 &&
       cmake --build . --target unittest &&
