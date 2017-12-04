@@ -32,7 +32,8 @@ install:
       # docker pull freeorion/freeorion-travis-build
 
       # Create docker container from Dockerfile
-      docker build --tag freeorion/freeorion-travis-build . < tools/docker/Dockerfile 
+      ln -s tools/docker/Dockerfile .
+      docker build --tag freeorion/freeorion-travis-build . 
     fi
   - >
     if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
