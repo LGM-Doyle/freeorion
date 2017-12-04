@@ -77,8 +77,9 @@ before_script:
       # Add transparent cmake function to allow possible cross platform use of
       # build sections.
       # mount ccache dir and set its environment variable
-      function cmake {
-          docker run -v "${TRAVIS_BUILD_DIR}:/freeorion"  -v "${HOME}/.ccache:/ccache_dir" -e CCACHE_DIR='/ccache_dir' -w /freeorion/build freeorion/freeorion-travis-build /usr/bin/cmake $@
+      # timeout before Travis kills jobs so that ccache is always at least partially populated
+      timeout 40m      function cmake {
+          docker run -v "${TRAVIS_BUILD_DIR}:/freeorion"  -v "${HOME}/.ccache:/ccache_dir" -e CCACHE_DIR='/ccache_dir' -w /freeorion/build freeorion/freeorion-travis-build timeout 40m /usr/bin/cmake $@
       }
     fi
   - mkdir build
@@ -105,8 +106,7 @@ script:
   - >
     if [[ "${TRAVIS_OS_NAME}" == "linux" && "${BUILD_UNITTEST}" == "true" ]]; then
       cmake -DBUILD_TESTING=ON ..
-      # timeout before Travis kills jobs so that ccache is always at least partially populated
-      timeout 40m cmake --build . -- -j 2 &&
+      cmake --build . -- -j 2 &&
       cmake --build . --target unittest &&
       cd ../default &&
       python -m compileall -q .
