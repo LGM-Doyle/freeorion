@@ -78,7 +78,7 @@ before_script:
       # build sections.
       # mount ccache dir and set its environment variable
       # timeout before Travis kills jobs so that ccache is always at least partially populated
-      timeout 40m      function cmake {
+      function cmake {
           docker run -v "${TRAVIS_BUILD_DIR}:/freeorion"  -v "${HOME}/.ccache:/ccache_dir" -e CCACHE_DIR='/ccache_dir' -w /freeorion/build freeorion/freeorion-travis-build timeout 40m /usr/bin/cmake $@
       }
     fi
