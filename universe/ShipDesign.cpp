@@ -158,6 +158,7 @@ namespace CheckSums {
     }
 }
 
+
 ////////////////////////////////////////////////
 // Free Functions                             //
 ////////////////////////////////////////////////
@@ -798,8 +799,9 @@ void HullTypeManager::CheckPendingHullTypes() const {
         ErrorLogger() << "HullTypeManager expects at least one hull type.  All ship design construction will fail.";
 }
 
+
 /////////////////////////////////////
-// ParsedShipDesign     //
+// ParsedShipDesign                //
 /////////////////////////////////////
 ParsedShipDesign::ParsedShipDesign(
     const std::string& name, const std::string& description,
@@ -1251,7 +1253,7 @@ ShipDesign::MaybeInvalidDesign(const std::string& hull_in,
 }
 
 void ShipDesign::ForceValidDesignOrThrow(const boost::optional<std::invalid_argument>& should_throw,
-                                         bool  produce_log)
+                                         bool produce_log)
 {
     auto force_valid = MaybeInvalidDesign(m_hull, m_parts, produce_log);
     if (!force_valid)
@@ -1433,6 +1435,7 @@ bool operator ==(const ShipDesign& first, const ShipDesign& second) {
     return first_parts == second_parts;
 }
 
+
 /////////////////////////////////////
 // PredefinedShipDesignManager     //
 /////////////////////////////////////
@@ -1506,7 +1509,6 @@ PredefinedShipDesignManager& PredefinedShipDesignManager::GetPredefinedShipDesig
     return manager;
 }
 
-
 std::vector<const ShipDesign*> PredefinedShipDesignManager::GetOrderedShipDesigns() const {
     CheckPendingDesignsTypes();
     std::vector<const ShipDesign*> retval;
@@ -1550,7 +1552,6 @@ unsigned int PredefinedShipDesignManager::GetCheckSum() const {
     DebugLogger() << "PredefinedShipDesignManager checksum: " << retval;
     return retval;
 }
-
 
 void PredefinedShipDesignManager::SetShipDesignTypes(
     Pending::Pending<ParsedShipDesignsType>&& pending_designs)
