@@ -43,7 +43,7 @@ namespace parse {
                 |   tok.HullSpeed_
                 |   tok.PartCapacity_
                 |   tok.PartSecondaryStat_
-                |   tok.PartTertiaryStat_
+                |   tok.PartNoisiness_
                ) >   label(tok.Name_) > string_grammar
               ) [ _val = construct_movable_(new_<ValueRef::ComplexVariable<double>>(
                         _1,
